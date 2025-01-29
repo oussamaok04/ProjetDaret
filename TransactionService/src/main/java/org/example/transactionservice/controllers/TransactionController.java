@@ -2,9 +2,9 @@ package org.example.transactionservice.controllers;
 
 import org.example.transactionservice.dto.TransactionDTO;
 import org.example.transactionservice.entities.Transaction;
-import org.example.transactionservice.enums.Type;
 import org.example.transactionservice.services.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,6 +15,8 @@ public class TransactionController {
 
     @Autowired
     private TransactionService transactionService;
+    @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate;
 
 
     @GetMapping("/search/all")
@@ -49,7 +51,9 @@ public class TransactionController {
 
     @PostMapping("/save")
     public Transaction saveTransaction(@RequestBody TransactionDTO dto) {
-        return transactionService.saveTransaction(dto);
+        Transaction transaction = transactionService.saveTransaction(dto);
+        kafkaTemplate.send("transactions-topic", transaction.getId().toString());
+        return transaction;
     }
 
     @PutMapping("/update/{id}")
