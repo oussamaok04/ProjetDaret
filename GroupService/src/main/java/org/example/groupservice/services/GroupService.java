@@ -38,7 +38,14 @@ public class GroupService {
     }
 
     public List<Group> getAllGroups() {
-        return groupRepo.findAll();
+        return groupRepo.findAll().stream()
+                .peek(
+                        x -> {
+                            UserApp user = userAppClient.getUserById(x.getCreatedByUserId());
+                            x.setCreatedBy(user);
+
+                        }
+                ).toList();
     }
 
     public String deleteGroupById(Long id) {
