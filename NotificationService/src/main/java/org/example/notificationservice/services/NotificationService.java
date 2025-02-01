@@ -3,13 +3,14 @@ package org.example.notificationservice.services;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.example.notificationservice.entity.Notification;
-import org.example.notificationservice.feign.Transaction;
-import org.example.notificationservice.feign.clients.TransactionClient;
 import org.example.notificationservice.repositories.NotificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -18,24 +19,20 @@ public class NotificationService {
 
     @Autowired
     private NotificationRepository notificationRepository;
-    @Autowired
-    private TransactionClient transactionClient;
-
-//    @KafkaListener(topics = "transactions-topic", groupId = "group_id")
-//    public void consume(String transaction) {
-//        System.out.println("Transaction created" + transaction);
-//    }
 
     @KafkaListener(topics = "transactions-topic", groupId = "group_id")
-    public void notify(String transactionId) {
-        Transaction transaction = transactionClient.getTransactionById(Long.parseLong(transactionId));
+    public void notify(String transaction) throws JSONException {
+        JSONObject json = new JSONObject(transaction);
         Notification notification = Notification.builder()
-//                .type("Transaction: " + transaction.getType())
+                .type(json.getString("type"))
                 .isRead(false)
-                .message(transaction.getDescription())
+                .recieverId(json.getLong("recieverId"))
+                .message(json.getString("description") + ", amount: " + json.getDouble("amount"))
+                .createdAt(LocalDateTime.now())
                 .build();
         notificationRepository.save(notification);
-        System.out.println("Notification created" + notification.toString());
+        System.out.println("Notification created: " + notification.toString());
+        System.out.println("Transaction created: " + transaction);
     }
 
     public List<Notification> getAllNotifications() {
@@ -49,6 +46,10 @@ public class NotificationService {
 
         notification.setRead(true);
         return notification;
+    }
+
+    public List<Notification> getNotificationByRecieverId(Long id){
+        return notificationRepository.getNotificationsByRecieverId(id);
     }
 
 
