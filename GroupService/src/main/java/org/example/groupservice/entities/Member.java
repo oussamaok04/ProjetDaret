@@ -1,5 +1,6 @@
 package org.example.groupservice.entities;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,12 +16,14 @@ public class Member {
     private Long id;
     private String username;
     private String role;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Long userId;
 
     @Transient
     private UserApp userApp;
 
     @ManyToOne
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @JoinColumn(name = "groupId")
     private Group group;
 }
