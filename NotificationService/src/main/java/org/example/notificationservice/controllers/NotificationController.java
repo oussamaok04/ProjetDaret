@@ -22,4 +22,9 @@ public class NotificationController {
     public List<Notification> getAllNotifications() {
         return notificationService.getAllNotifications();
     }
+
+    @GetMapping("/search/reciever/{recieverId}")
+    public List<Notification> getNotificationsByReciever(@PathVariable Long recieverId) {
+        return notificationService.getNotificationByRecieverId(recieverId);
+    }
 }
