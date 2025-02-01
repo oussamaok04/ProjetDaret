@@ -1,5 +1,6 @@
 package org.example.transactionservice.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.transactionservice.dto.TransactionDTO;
 import org.example.transactionservice.entities.Transaction;
 import org.example.transactionservice.services.TransactionService;
@@ -44,15 +45,20 @@ public class TransactionController {
         return transactionService.getAllTransactionsByReceiverId(recieverId);
     }
 
-    @GetMapping("/search")
+    @GetMapping("/search/{type}")
     public List<Transaction> getTransactionsByType(@PathVariable String type) {
         return transactionService.getAllTransactionsByType(type);
     }
 
     @PostMapping("/save")
     public Transaction saveTransaction(@RequestBody TransactionDTO dto) {
-        Transaction transaction = transactionService.saveTransaction(dto);
-        kafkaTemplate.send("transactions-topic", transaction.getId().toString());
+        Transaction transaction = null;
+        try{
+            transaction = transactionService.saveTransaction(dto);
+            kafkaTemplate.send("transactions-topic", new ObjectMapper().writeValueAsString(dto));
+        }catch (Exception e){
+            System.err.println(e.getMessage());
+        }
         return transaction;
     }
 
