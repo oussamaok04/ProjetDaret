@@ -7,6 +7,7 @@ import org.example.groupservice.dto.mappers.DtoToMember;
 import org.example.groupservice.entities.Group;
 import org.example.groupservice.entities.Member;
 import org.example.groupservice.feign.UserApp;
+import org.example.groupservice.feign.clients.UserAppClient;
 import org.example.groupservice.repositories.GroupRepo;
 import org.example.groupservice.repositories.MemberRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,25 +25,38 @@ public class MemberService {
     private DtoToMember dtoToMember;
     @Autowired
     private GroupService groupService;
+    @Autowired
+    private UserAppClient userAppClient;
 
     public void joinGroup(Long groupId, Long userId) {
 
         MemberDTO dto = new MemberDTO(userId, groupId);
+        UserApp userApp = userAppClient.getUserById(userId);
 
         Member member = dtoToMember.convert(dto);
         member.setRole("MEMBER");
+        member.setUserApp(userApp);
 
         memberRepo.save(member);
     }
 
     public Member getMemberById(Long id) {
-        return memberRepo.findById(id).orElseThrow(
+        Member member = memberRepo.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Member with id " + id + " not found")
         );
+        UserApp userApp = userAppClient.getUserById(member.getUserId());
+        member.setUserApp(userApp);
+        return member;
     }
 
     public List<Member> getMembersByGroupId(Long groupId) {
-        return groupService.getGroupById(groupId).getMembers();
+        return groupService.getGroupById(groupId).getMembers().stream()
+                .peek(
+                        x -> {
+                            UserApp userApp = userAppClient.getUserById(x.getUserId());
+                            x.setUserApp(userApp);
+                        }
+                ).toList();
     }
 
     public String deleteMember(Long id) {
