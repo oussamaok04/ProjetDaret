@@ -25,6 +25,8 @@ public class GroupService {
     private DtoToGroup dtoToGroup;
     @Autowired
     private UserAppClient userAppClient;
+    @Autowired
+    private MemberRepo memberRepo;
 
     public Group getGroupById(Long id) throws EntityNotFoundException {
         Group g = groupRepo.findById(id).orElseThrow(
@@ -54,7 +56,17 @@ public class GroupService {
     }
 
     public Group saveGroup(GroupDTO dto) {
-        return groupRepo.save(dtoToGroup.convert(dto));
+//        return groupRepo.save(dtoToGroup.convert(dto));
+        Group group = dtoToGroup.convert(dto);
+        groupRepo.save(group);
+        Member member = Member.builder()
+                .username(group.getCreatedBy().getFirstName() + " " + group.getCreatedBy().getLastName())
+                .role("ADMIN")
+                .userId(group.getCreatedByUserId())
+                .group(group)
+                .build();
+        memberRepo.save(member);
+        return group;
     }
 
     public Group updateGroupById(Long id, GroupDTO dto) {
