@@ -1,5 +1,6 @@
 package org.example.transactionservice.entities;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,8 +21,11 @@ public class Transaction {
     private Double amount;
     private String type;
     private String description;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Long senderId;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Long recieverId;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Long groupId;
     private LocalDateTime sentAt = LocalDateTime.now();
 
